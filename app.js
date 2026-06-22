@@ -138,6 +138,48 @@ function initHome() {
 }
 
 // ============================================
+// Initialization & Welcome Logic
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    initHome();
+    
+    // Check if name is saved
+    const savedName = localStorage.getItem('simulador_username');
+    if (savedName) {
+        document.getElementById('user-name-display').textContent = savedName;
+        showScreen('screen-home');
+    } else {
+        showScreen('screen-welcome');
+    }
+});
+
+function handleNameKeypress(event) {
+    if (event.key === 'Enter') {
+        saveNameAndStart();
+    }
+}
+
+function saveNameAndStart() {
+    const input = document.getElementById('user-name-input');
+    const name = input.value.trim();
+    
+    if (name.length < 2) {
+        alert('Por favor, ingresa un nombre válido.');
+        return;
+    }
+    
+    // Save to local storage
+    localStorage.setItem('simulador_username', name);
+    
+    // Update display
+    document.getElementById('user-name-display').textContent = name;
+    
+    // Go to home
+    showScreen('screen-home');
+}
+
+// ============================================
 // Quiz Logic
 // ============================================
 
@@ -627,10 +669,4 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// ============================================
-// Init
-// ============================================
-
-document.addEventListener('DOMContentLoaded', () => {
-    initHome();
-});
+// Init done at the top

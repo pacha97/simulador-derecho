@@ -11,13 +11,35 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- ========== HOME SCREEN ========== -->
-    <div id="screen-home" class="screen active">
+    <!-- ========== WELCOME SCREEN ========== -->
+    <div id="screen-welcome" class="screen active">
         <div class="home-container">
             <div class="home-glow"></div>
             <div class="home-card glass-card">
                 <div class="home-badge">UTPL · Carrera de Derecho</div>
-                <h1 class="home-greeting">Hola, <span class="gradient-text">Oscar</span></h1>
+                <h1 class="home-greeting">¡Bienvenido!</h1>
+                <p class="home-subtitle" style="margin-bottom: 24px;">Ingresa tu nombre para comenzar a practicar.</p>
+                
+                <div class="input-group" style="margin-bottom: 32px;">
+                    <input type="text" id="user-name-input" class="modern-input" placeholder="Tu nombre o apodo" onkeypress="handleNameKeypress(event)">
+                </div>
+
+                <div class="home-buttons">
+                    <button class="btn btn-primary btn-lg" onclick="saveNameAndStart()" style="justify-content: center;">
+                        <span class="btn-title" style="margin: 0;">Entrar al Simulador</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== HOME SCREEN ========== -->
+    <div id="screen-home" class="screen">
+        <div class="home-container">
+            <div class="home-glow"></div>
+            <div class="home-card glass-card">
+                <div class="home-badge">UTPL · Carrera de Derecho</div>
+                <h1 class="home-greeting">Hola, <span class="gradient-text" id="user-name-display">Oscar</span></h1>
                 <p class="home-subtitle">Simulador de Examen Complexivo 2026</p>
                 
                 <div class="home-stats" id="home-stats">
