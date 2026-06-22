@@ -80,7 +80,7 @@ function showScreen(screenId) {
 }
 
 function goHome() {
-    state = { mode: null, questions: [], currentIndex: 0, answers: [], answered: false, totalQuestions: 0 };
+    state = { mode: null, topicName: null, questions: [], currentIndex: 0, answers: [], answered: false, totalQuestions: 0 };
     showScreen('screen-home');
 }
 
@@ -185,14 +185,20 @@ function startSimulator() {
     renderQuestion();
 }
 
-function startPractice() {
+function startPractice(topicName = null) {
     if (typeof QUESTIONS === 'undefined' || QUESTIONS.length === 0) {
         alert('Error: No se pudieron cargar las preguntas.');
         return;
     }
 
-    state.mode = 'practice';
-    state.questions = shuffleArray(QUESTIONS);
+    let pool = [...QUESTIONS];
+    if (topicName) {
+        pool = pool.filter(q => q.topic === topicName);
+    }
+
+    state.mode = topicName ? 'practice-topic' : 'practice';
+    state.topicName = topicName;
+    state.questions = shuffleArray(pool);
     state.totalQuestions = state.questions.length;
     state.currentIndex = 0;
     state.answers = [];
@@ -203,13 +209,49 @@ function startPractice() {
     renderQuestion();
 }
 
+// ============================================
+// Topic Modal Logic
+// ============================================
+
+function openTopicModal() {
+    const grid = document.getElementById('topic-grid-modal');
+    if (grid && typeof QUESTIONS !== 'undefined') {
+        const topics = [...new Set(QUESTIONS.map(q => q.topic))].sort();
+        grid.innerHTML = '';
+        topics.forEach(topic => {
+            const count = QUESTIONS.filter(q => q.topic === topic).length;
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-secondary';
+            btn.style.justifyContent = 'space-between';
+            btn.style.width = '100%';
+            btn.style.padding = '12px 20px';
+            btn.innerHTML = `<span>${topic}</span><span style="opacity: 0.7; font-size: 0.85rem;">${count} preg.</span>`;
+            btn.onclick = () => {
+                closeTopicModal();
+                startPractice(topic);
+            };
+            grid.appendChild(btn);
+        });
+    }
+    const modal = document.getElementById('modal-topic');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeTopicModal() {
+    const modal = document.getElementById('modal-topic');
+    if (modal) modal.style.display = 'none';
+}
+
 function setupQuizUI() {
     const badge = document.getElementById('quiz-mode-badge');
     if (state.mode === 'simulator') {
         badge.textContent = 'Simulador';
         badge.classList.remove('practice');
+    } else if (state.mode === 'practice-topic') {
+        badge.textContent = `Práctica: ${TOPIC_SHORT[state.topicName] || state.topicName}`;
+        badge.classList.add('practice');
     } else {
-        badge.textContent = 'Práctica';
+        badge.textContent = 'Práctica Normal';
         badge.classList.add('practice');
     }
 
