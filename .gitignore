@@ -2,3 +2,7 @@
 __pycache__/
 *.pyc
 .DS_Store
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
