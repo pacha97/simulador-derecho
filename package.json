@@ -1,0 +1,21 @@
+{
+  "name": "simulador-derecho",
+  "version": "1.0.0",
+  "description": "Simulador de Examen Complexivo para la Carrera de Derecho 2026",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000"
+  },
+  "keywords": [
+    "derecho",
+    "simulador",
+    "examen",
+    "complexivo"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^1.3.1"
+  }
+}
