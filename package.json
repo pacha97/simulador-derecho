@@ -1,0 +1,21 @@
+{
+  "name": "simulador-derecho",
+  "version": "1.0.0",
+  "description": "Simulador de Examen Complexivo para la Carrera de Derecho 2026",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'No build required for static site'",
+    "dev": "python3 -m http.server 8000",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": [
+    "simulador",
+    "derecho",
+    "quiz"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
