@@ -325,8 +325,8 @@ function renderQuestion() {
     const container = document.getElementById('options-container');
     container.innerHTML = '';
 
-    // Shuffle options for practice mode
-    const options = state.mode === 'practice' ? shuffleArray(q.options) : q.options;
+    // Shuffle options for practice modes
+    const options = state.mode.startsWith('practice') ? shuffleArray(q.options) : q.options;
 
     options.forEach(opt => {
         const btn = document.createElement('button');
@@ -344,6 +344,8 @@ function renderQuestion() {
     // Hide feedback and navigation
     document.getElementById('feedback-card').style.display = 'none';
     document.getElementById('btn-next').style.display = 'none';
+    const btnRetry = document.getElementById('btn-retry');
+    if (btnRetry) btnRetry.style.display = 'none';
     document.getElementById('btn-finish').style.display = 'none';
 
     // Animate question card
@@ -385,7 +387,7 @@ function selectOption(letter, question) {
     });
 
     // Practice mode: show feedback immediately
-    if (state.mode === 'practice') {
+    if (state.mode.startsWith('practice')) {
         showFeedback(isCorrect, question);
     }
 
@@ -425,19 +427,41 @@ function showNavigation() {
     } else {
         // Practice mode: always show next (infinite)
         document.getElementById('btn-next').style.display = 'flex';
+        
+        // If they answered incorrectly, show retry
+        const lastAnswer = state.answers[state.answers.length - 1];
+        if (lastAnswer && !lastAnswer.isCorrect) {
+            const btnRetry = document.getElementById('btn-retry');
+            if (btnRetry) btnRetry.style.display = 'flex';
+        }
     }
 }
 
 function nextQuestion() {
     state.currentIndex++;
 
-    if (state.mode === 'practice' && state.currentIndex >= state.totalQuestions) {
+    if (state.mode.startsWith('practice') && state.currentIndex >= state.totalQuestions) {
         // Reshuffle and continue
-        state.questions = shuffleArray(QUESTIONS);
+        let pool = [...QUESTIONS];
+        if (state.topicName) {
+            pool = pool.filter(q => q.topic === state.topicName);
+        }
+        state.questions = shuffleArray(pool);
         state.currentIndex = 0;
         state.totalQuestions = state.questions.length;
     }
 
+    renderQuestion();
+}
+
+function retryQuestion() {
+    // Remove last answer from state.answers if it belongs to current index
+    const lastAnswer = state.answers[state.answers.length - 1];
+    if (lastAnswer && lastAnswer.questionIndex === state.currentIndex) {
+        state.answers.pop();
+    }
+    
+    // Re-render
     renderQuestion();
 }
 
