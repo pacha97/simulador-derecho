@@ -138,45 +138,70 @@ function initHome() {
 }
 
 // ============================================
-// Initialization & Welcome Logic
+// Initialization & Auth Logic
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     initHome();
     
-    // Check if name is saved
-    const savedName = localStorage.getItem('simulador_username');
-    if (savedName) {
-        document.getElementById('user-name-display').textContent = savedName;
+    // Check Supabase session
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (data && data.session) {
+        const emailName = data.session.user.email.split('@')[0];
+        document.getElementById('user-name-display').textContent = emailName.charAt(0).toUpperCase() + emailName.slice(1);
         showScreen('screen-home');
     } else {
         showScreen('screen-welcome');
     }
+
+    // Set up auth listener
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+            showScreen('screen-welcome');
+        } else if (event === 'SIGNED_IN' && session) {
+            const emailName = session.user.email.split('@')[0];
+            document.getElementById('user-name-display').textContent = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+            showScreen('screen-home');
+        }
+    });
 });
 
-function handleNameKeypress(event) {
+function handleLoginKeypress(event) {
     if (event.key === 'Enter') {
-        saveNameAndStart();
+        loginUser();
     }
 }
 
-function saveNameAndStart() {
-    const input = document.getElementById('user-name-input');
-    const name = input.value.trim();
-    
-    if (name.length < 2) {
-        alert('Por favor, ingresa un nombre válido.');
+async function loginUser() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorDiv = document.getElementById('login-error');
+    const btn = document.getElementById('btn-login');
+
+    if (!email || !password) {
+        errorDiv.textContent = 'Por favor, ingresa correo y contraseña.';
         return;
     }
-    
-    // Save to local storage
-    localStorage.setItem('simulador_username', name);
-    
-    // Update display
-    document.getElementById('user-name-display').textContent = name;
-    
-    // Go to home
-    showScreen('screen-home');
+
+    errorDiv.textContent = '';
+    btn.innerHTML = `<span class="btn-title" style="margin: 0;">Ingresando...</span>`;
+    btn.disabled = true;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password,
+    });
+
+    btn.innerHTML = `<span class="btn-title" style="margin: 0;">Entrar al Simulador</span>`;
+    btn.disabled = false;
+
+    if (error) {
+        errorDiv.textContent = 'Credenciales incorrectas. Verifica tu acceso.';
+    }
+}
+
+async function logoutUser() {
+    await supabaseClient.auth.signOut();
 }
 
 // ============================================
@@ -502,7 +527,7 @@ function showResults() {
 
     if (percentage >= 90) {
         emoji.textContent = '🏆';
-        msg.textContent = '¡Excelente, Oscar! Dominas la materia.';
+        msg.textContent = '¡Excelente! Dominas la materia.';
     } else if (percentage >= 70) {
         emoji.textContent = '🎯';
         msg.textContent = '¡Muy bien! Vas por buen camino.';
@@ -529,6 +554,11 @@ function showResults() {
 
     // Review list
     renderReviewList('all');
+
+    // Save to Supabase if it's a simulator
+    if (state.mode === 'simulator' && total > 0) {
+        saveScoreToSupabase(correctCount, total);
+    }
 }
 
 function addScoreGradient() {
@@ -694,3 +724,78 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Init done at the top
+
+// ============================================
+// Supabase & History
+// ============================================
+
+async function saveScoreToSupabase(score, total) {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+
+    await supabaseClient
+        .from('test_history')
+        .insert([{
+            user_id: user.id,
+            score: score,
+            total: total
+        }]);
+}
+
+async function showHistoryScreen() {
+    showScreen('screen-history');
+    await loadHistory();
+}
+
+async function loadHistory() {
+    const list = document.getElementById('history-list');
+    list.innerHTML = '<div style="text-align: center; color: var(--text-muted);">Cargando historial...</div>';
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+        list.innerHTML = '<div style="text-align: center; color: var(--text-muted);">Debes iniciar sesión.</div>';
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from('test_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        list.innerHTML = '<div style="text-align: center; color: var(--text-muted);">Error al cargar historial.</div>';
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        list.innerHTML = '<div style="text-align: center; color: var(--text-muted);">Aún no tienes simuladores completados.</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+    data.forEach(item => {
+        const pct = Math.round((item.score / item.total) * 100);
+        let color = '#ef4444';
+        if (pct >= 90) color = '#10b981';
+        else if (pct >= 70) color = '#3b82f6';
+        else if (pct >= 50) color = '#f59e0b';
+
+        const div = document.createElement('div');
+        div.style.cssText = 'background: rgba(15, 23, 42, 0.4); padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 12px;';
+        
+        const dateStr = new Date(item.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+
+        div.innerHTML = `
+            <div>
+                <div style="font-weight: 500; font-size: 1.05rem;">Simulador de Prueba</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">${dateStr}</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 1.2rem; font-weight: 700; color: ${color};">${pct}%</div>
+                <div style="font-size: 0.8rem; opacity: 0.7;">${item.score}/${item.total} correctas</div>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
