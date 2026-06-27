@@ -427,13 +427,13 @@ function showNavigation() {
     } else {
         // Practice mode: always show next (infinite)
         document.getElementById('btn-next').style.display = 'flex';
-        
-        // If they answered incorrectly, show retry
-        const lastAnswer = state.answers[state.answers.length - 1];
-        if (lastAnswer && !lastAnswer.isCorrect) {
-            const btnRetry = document.getElementById('btn-retry');
-            if (btnRetry) btnRetry.style.display = 'flex';
-        }
+    }
+
+    // If they answered incorrectly, show retry (in all modes)
+    const lastAnswer = state.answers[state.answers.length - 1];
+    if (lastAnswer && !lastAnswer.isCorrect) {
+        const btnRetry = document.getElementById('btn-retry');
+        if (btnRetry) btnRetry.style.display = 'flex';
     }
 }
 
