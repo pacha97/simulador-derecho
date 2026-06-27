@@ -325,8 +325,8 @@ function renderQuestion() {
     const container = document.getElementById('options-container');
     container.innerHTML = '';
 
-    // Shuffle options for practice modes
-    const options = state.mode.startsWith('practice') ? shuffleArray(q.options) : q.options;
+    // Shuffle options randomly for all modes (including retry)
+    const options = shuffleArray(q.options);
 
     options.forEach(opt => {
         const btn = document.createElement('button');
